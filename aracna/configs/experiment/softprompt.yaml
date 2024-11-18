@@ -1,0 +1,28 @@
+# @package _global_
+defaults:
+  - override /trainer: not_simmed
+
+task:
+  name: softprompt
+  info:
+    name: unsupervised_paired
+    max_seq_length: 10000
+    prepend_len: 3000
+    max_tot_cn: 10
+    max_tot_cn_arch: 10
+
+  dataset:
+    name: real_from_file_data
+    data_path: data/test_softprompt/file_list.txt
+    read_colname: "rolling_avg_2000"
+
+
+  metrics:
+    - reconstruction_loss_detail
+
+  model_checkpoint: aracna/araCNA-models/pjflljt4/checkpoints/last.ckpt
+
+
+callbacks:
+  model_checkpoint:
+    monitor: val/read_recon

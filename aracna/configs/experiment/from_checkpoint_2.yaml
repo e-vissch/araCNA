@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - from_checkpoint_1
+
+task:
+  model_checkpoint: aracna/araCNA-models/pjflljt4/checkpoints/last.ckpt
+  dataset:
+    max_total: 8
+  info:
+    max_tot_cn: 8
+  use_last_seqlen: false
+
+callbacks:
+  warmup_difficulty:
+    include: true
+    max_total: ${task.dataset.max_total}
+    sampling_warmup_interval: 500
+    start_tot: 4

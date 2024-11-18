@@ -1,0 +1,25 @@
+# @package _global_
+defaults:
+  - default
+
+trainer:
+  global_batch_size: 4
+  seqlen_warmup:
+    - epochs: 50
+      seq_len: 25000 
+      batch_size: 1
+    - epochs: 50
+      seq_len: 50000 
+      batch_size: 1
+    - epochs: 50
+      seq_len: 100000 
+      batch_size: 1
+    - epochs: 50 
+      seq_len: 200000
+      batch_size: 1
+    - epochs: 50 
+      seq_len: 500000
+      batch_size: 1
+    - epochs: 50
+      seq_len: 650000 
+      batch_size: 1

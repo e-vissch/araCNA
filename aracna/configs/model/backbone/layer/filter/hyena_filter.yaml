@@ -1,0 +1,12 @@
+emb_dim: 5 # dim of input to MLP, augments with positional encoding
+order: 16 # width of the implicit MLP
+seq_len: ${..l_max}
+lr: 1e-3
+lr_pos_emb: 1e-5
+dropout: 0.0
+w: 10 # frequency of periodic activations
+wd: 0 # weight decay of kernel parameters
+bias: true
+normalized: false
+num_inner_mlps: 2
+bidirectional: true

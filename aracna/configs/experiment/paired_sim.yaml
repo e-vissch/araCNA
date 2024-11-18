@@ -1,0 +1,54 @@
+# @package _global_
+task:
+  name: train
+  info:
+    name: paired
+    max_seq_length: 1000000 # this sets the hyena max sequence length too, even if gets over-ridden below
+    read_recon_weight: 0
+    baf_recon_weight: 0
+    loss_weights: [1, 1] # read_depth, purity
+    max_tot_cn: 8
+    max_tot_cn_arch: 10
+    avg_rd_trim_ratio: 0.05
+
+  metrics:
+    - discrete_accuracy
+    - sequence_loss
+    - supervised_loss_detail
+    - reconstruction_loss_detail
+
+  dataset:
+    name: simmed_global
+    n_batches: 1000 # because dataset is infinite, we need to specify how many batches to sample
+    max_total: 10
+    read_depth_range: [5, 70]
+    read_depth_scale_range: [0.05, 0.05]
+    baf_scale_range: [0.01, 0.01]
+
+model:
+  embeddings:
+    name: "real_cna"
+    input_dim: 2
+    embed_dim: ${..d_model}
+    chromosome_dim: 23 # N_CHROM
+    token_dim: 24 # N CHROM + global, current approach just has seq/global but this allows for adding tokens in finetuning
+
+  decoder:
+    # name: 'paired'
+    decoder_dim: ${..d_model}
+    max_tot_cn: ${...task.info.max_tot_cn_arch}
+
+
+callbacks:
+  model_checkpoint:
+    monitor: val/discrete_accuracy
+
+  warmup_difficulty:
+    include: false
+    max_total: ${task.dataset.max_total}
+    sampling_warmup_interval: 500
+    start_tot: 4
+
+trainer:
+  max_epochs: 10000
+  val_check_interval: 100 # every n bacthes

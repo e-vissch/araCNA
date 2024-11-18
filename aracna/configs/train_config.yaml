@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - _self_
+  - base_train_config
+  - pipeline: base_cna
+  # - experiment: simple_start
+  - experiment: from_checkpoint
+
+# We primarily use wandb so this is moved to top level in the config for convenience
+# Set `~wandb` or `wandb=null` or `wandb.mode=disabled` to disable logging
+# If other loggers are added, it would make sense to put this one level lower under train/ or logger/
+wandb:
+  project: araCNA-models
+  group: ""
+  job_type: training
+  mode: online # choices=['online', 'offline', 'disabled']
+  name: null
+  save_dir: "."
+  id: ${.name} # pass correct id to resume experiment!
+  # log_model: false
+
+hydra:
+  run:
+    dir: ./logs/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}

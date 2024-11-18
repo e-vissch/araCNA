@@ -1,0 +1,25 @@
+# src
+einops
+hydra-core
+# causal-conv1d>=1.1.0 # for a100 gpu
+# mamba-ssm # for a100 gpu
+lightning
+torch # ideally install on GPU, using conda compat with cuda, see ReadMe
+torchvision # ideally install on GPU, using conda compat with cuda, see ReadMe
+umap-learn
+wandb 
+
+# plotting:
+matplotlib
+pandas
+seaborn
+
+# analysis
+patsy
+pytest # for patsy
+duckdb
+
+#inference on bams
+pysam
+scikit-learn
+statsmodels

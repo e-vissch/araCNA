@@ -1,0 +1,8 @@
+# not needed for main distribution, however needed for running notebook_analyses/workflows
+
+# notebooks
+jupyter
+
+# workflow:
+snakemake
+snakemake-executor-plugin-slurm

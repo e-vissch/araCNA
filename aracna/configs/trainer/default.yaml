@@ -1,0 +1,9 @@
+# @package _global_
+defaults:
+  - not_simmed
+
+trainer:
+  seqlen_warmup:
+    - epochs: ${...max_epochs}
+      seq_len: 10000
+      batch_size: 4

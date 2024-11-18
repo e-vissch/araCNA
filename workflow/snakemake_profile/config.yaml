@@ -1,0 +1,16 @@
+snakefile: ../main.smk
+max-status-checks-per-second: 0.01
+executor: slurm
+
+default-resources:
+  slurm_account: yau.prj
+  partition: short
+  cpus_per_task: 1
+  jobs: 1
+  time: 30:00:00
+
+cores: 12 # so that group doesn't exceed this, but will limit others
+group-components: # just to allow for multiple group jobs w/o remembering CLI args
+  - subgroup1=5
+  - subgroup2=60
+  - subgroup3=100

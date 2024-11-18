@@ -1,0 +1,35 @@
+# @package _global_
+defaults:
+  - paired_sim
+
+task:
+  dataset:
+    read_depth_range: [5, 70]
+    read_depth_scale_range: [0.05, 0.05]
+    baf_scale_range: [0.01, 0.01]
+    purity_range: [1, 1]
+    max_total: 3
+    _start_seqlen: ${trainer.seqlen_warmup[0].seq_len}
+
+  info:
+    max_seq_length: 650000 # this sets the hyena max sequence length too, even if gets over-ridden below
+    max_tot_cn: 8
+    max_tot_cn_arch: 10
+
+
+optimizer:
+  lr: 1e-4
+  weight_decay: 0 # setting this seems bad
+
+trainer:
+  global_batch_size: 4
+
+scheduler:
+  T_max: 20
+# scheduler: null
+
+model:
+  embeddings:
+    include_position: false
+    include_chromosome: false
+    lin_embeds: false

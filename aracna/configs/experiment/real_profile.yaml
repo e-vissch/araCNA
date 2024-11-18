@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - paired_sim
+
+task:
+  dataset:
+    name: real_profile_global
+    data_path: data/ReleasedData/TCGA_SNP6_hg38

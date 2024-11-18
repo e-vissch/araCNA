@@ -1,0 +1,10 @@
+defaults:
+  - backbone: hyena
+  # - backbone: attn
+  # - backbone: mamba
+
+d_model: 32
+n_layer: 2
+
+decoder:
+  decoder_dim: ${..d_model}

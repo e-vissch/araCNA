@@ -1,0 +1,33 @@
+program: src/cli/train.py
+method: bayes
+metric:
+  goal: maximize
+  name: val/discrete_accuracy
+parameters:
+  # experiment: 
+  #   values: simple_start
+  model.d_model:
+    values: [32, 64]
+  model.n_layer:
+    values: [2, 3]
+
+  optimizer.lr:
+    values: [1e-3, 5e-4, 1e-4]
+
+  optimizer.weight_decay: 
+    values: [0, 1e-5]
+
+  trainer.global_batch_size: 
+    values: [2, 5, 10]
+
+  trainer.max_epochs: 
+    values: [1000]
+
+  task.info.loss_weights: 
+    values: [[1, 1], [0.5, 0.5]]
+    # small_CN_weight: [0, 1]
+
+command:
+  - venv/bin/python
+  - ${program}
+  - ${args_no_hyphens}

@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - from_checkpoint_3
+
+task:
+  use_last_seqlen: true
+  model_checkpoint: aracna/araCNA-models/pjflljt4/checkpoints/last.ckpt
+  dataset:
+    purity_range: [0.5, 1]
+    read_depth_range: [5, 70]
+    read_depth_scale_range: [0.01, 0.2] # as proportion of read depth
+    baf_scale_range: [0.02, 0.1]
+    sample_seqlen: false
+    max_total: 4
+
+optimizer:
+  lr: 1e-4

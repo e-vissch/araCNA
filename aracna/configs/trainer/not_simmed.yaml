@@ -1,0 +1,11 @@
+# @package _global_
+trainer:
+  devices: auto
+  accelerator: cpu
+  max_epochs: 1000
+  gradient_clip_val: 0.0
+  log_every_n_steps: 10
+  val_check_interval: 1.
+  limit_val_batches: 10
+  global_batch_size: 4
+  seqlen_warmup: null

@@ -1,0 +1,12 @@
+# @package _global_
+defaults:
+  - simple_start
+
+task:
+  name: pretrained
+  use_last_seqlen: true
+  model_checkpoint: aracna/araCNA-models/pjflljt4/checkpoints/last.ckpt
+  dataset:
+    purity_range: [0.5, 1]
+    read_depth_scale_range: [0.01, 0.2] # as proportion of read depth
+    baf_scale_range: [0.02, 0.1]

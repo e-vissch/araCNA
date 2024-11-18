@@ -1,0 +1,52 @@
+
+# $ are placeholders and should be replaced, although most data paths can be changed depending on how they are used in workflow files. Paths starting with $araCNA_dir should not be changed (apart from the pointer ot $araCNA_dir)
+
+aracna_loc: "$araCNA_dir"
+script_loc: "$araCNA_dir/workflow/workflow_scripts"
+
+# generic input/out locs
+data_dir: "$data_dir"
+bam_locs: "$read_only_data_loc/gdc/bams"
+bam_output_dir: "$data_dir/tcga_analysis/output/bams"
+cel_output_dir: "$data_dir/tcga_analysis/output/cel"
+
+read_mount: "$read_mount"
+write_mount: "$work_dir"
+
+generic_dat_dir: "$data_dir/generic"
+interim_dat_dir: "$data_dir/tcga_analysis"
+
+## These point to location where your bam files exist and where the information regarding those bam files exist (i.including case_id etc), needed coz of diff download origin w diff read/write permissions
+bam_loc_1: "$data_dir/tcga_analysis/input/bams"
+case_file_1: "tcga_analysis/input/bams/paired_samples_10_10.txt"
+
+bam_loc_2 : "$read_only_data_loc/gdc/bams"
+case_file_2 :  "tcga_analysis/output/bams/paired_samples_06_09.txt"
+
+bam_loc_3 : "$data_dir/tcga_analysis/input/bams"
+case_file_3 :  "tcga_analysis/input/bams/paired_samples_21_10.txt"
+
+case_include_indices: [1, 2, 3] # as bams get deleted after processing for storage
+
+
+### Reference data downlaoded from respective githubs
+### Note not all ref data inlcuded here, lookup on "generic_dat_dir" to see other ref files.
+## Most downloaded from:
+# -  https://github.com/VanLoo-lab/ascat/tree/master/ReferenceFiles (ASCAT CEL/NGS/HMM Copy)
+# - https://github.com/cancerit/ascatNgs/wiki (for SnpGcCorrections.tsv, araCNA, see README for more details)
+# - https://github.com/Wedge-lab/battenberg (follow links) (for battenberg)
+# - https://gdc.cancer.gov/about-data/gdc-data-processing/gdc-reference-files (reference fasta, required by a few tools, also SNP6 remapped for ASCAT CEL analysis)
+# - http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ (refFlat.txt for CNVkit)
+
+apt_data_dir: "$data_dir/generic/SNP6_info/CD_GenomeWideSNP_6_rev3/Full/GenomeWideSNP_6/LibFiles"
+loci_file: "$data_dir/generic/snp_ref/SnpGcCorrections.tsv"
+allele_base_dir: "$data_dir/generic/snp_ref/G1000_alleles_hg38/G1000_alleles_hg38_"
+
+# this is an output of aracna_preprocess
+combined_loci_allele_file: "$data_dir/generic/snp_ref/snp_allele_set.csv"
+
+### Reference installs
+modules_dir: $module_dir/
+penn_cnv_affy_dir: "$module_dir/PennCNV/affy/libgw6"
+cnv_kit_imag_loc: "$singularity_image_dir/cnvkit_latest.sif"
+singularity_image_loc: "$singularity_image_dir/ascatngs_4.5.0.sif"

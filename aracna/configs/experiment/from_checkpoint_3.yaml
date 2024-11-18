@@ -1,0 +1,11 @@
+# @package _global_
+defaults:
+  - from_checkpoint_2
+  - override /trainer: seqlen_warmup
+
+task:
+  model_checkpoint: aracna/araCNA-models/pjflljt4/checkpoints/last.ckpt
+
+callbacks:
+  warmup_difficulty:
+    include: false

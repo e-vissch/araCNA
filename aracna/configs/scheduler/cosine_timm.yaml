@@ -1,0 +1,7 @@
+name: cosine_timm
+interval: step
+t_in_epochs: False
+t_initial: 300
+lr_min: ${eval:0.1 * ${optimizer.lr}}
+warmup_lr_init: 1e-6
+warmup_t: 10

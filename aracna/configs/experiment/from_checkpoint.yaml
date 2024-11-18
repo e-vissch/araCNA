@@ -1,0 +1,33 @@
+# @package _global_
+defaults:
+  - simple_start
+  # - override /trainer: seqlen_warmup
+
+task:
+  name: pretrained
+  use_last_seqlen: false
+  model_checkpoint: aracna/araCNA-models/pjflljt4/checkpoints/last.ckpt
+  dataset:
+    purity_range: [0.5, 1]
+    read_depth_range: [5, 70]
+    read_depth_scale_range: [0.01, 0.2] # as proportion of read depth
+    baf_scale_range: [0.02, 0.1]
+    sample_seqlen: false
+    max_total: 8
+
+callbacks:
+  warmup_difficulty:
+    include: false
+    max_total: ${task.dataset.max_total}
+    sampling_warmup_interval: 100
+    start_tot: 4
+
+optimizer:
+  lr: 1e-4
+
+
+trainer:
+  seqlen_warmup:
+    - epochs: ${...max_epochs}
+      seq_len: 650000
+      batch_size: 1

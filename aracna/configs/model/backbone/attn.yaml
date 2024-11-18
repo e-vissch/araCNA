@@ -1,0 +1,16 @@
+name: attn
+
+d_model: ${..d_model}
+n_layer: ${..n_layer}
+d_inner: ${eval:4 * ${.d_model}}
+
+# initializer_config: ${..initializer_config}
+attn_layer_idx: [0, 1]  # if passing these attn flags, then MHA auto used
+
+attn_cfg:
+  embed_dim: ${..d_model}
+  num_heads: 2
+  linear: true
+  flash: false  # figure out how to use
+  dropout: 0.1
+  causal: false
