@@ -4,8 +4,8 @@ import seaborn as sns
 import torch
 from matplotlib.colors import LinearSegmentedColormap
 
-from aracna.src.analysis.plot_comparison import apply_montserrat
-from aracna.src.src.task_info.cat_paired import SupervisedTrainInfo
+from aracna.analysis.plot_comparison import apply_montserrat
+from aracna.src.task_info.cat_paired import SupervisedTrainInfo
 
 
 def hex_to_rgba(hex_color):

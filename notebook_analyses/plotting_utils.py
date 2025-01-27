@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import torch
-from aracna.src.analysis.comparison_other_tools import get_reconstruction_metrics, get_val_dict
-from aracna.src.src.datamodules.simulated.main_cna_sampling_func import sample_from_profile
+from aracna.analysis.comparison_other_tools import get_reconstruction_metrics, get_val_dict
+from aracna.src.datamodules.simulated.main_cna_sampling_func import sample_from_profile
 
 from notebook_analyses.plotting_functions import plot_outs
 

@@ -1,8 +1,7 @@
 import sys
 import click
 
-from aracna.tests.test_models import test_runs
-from aracna.tests.test_models import test_runs_gpu
+from aracna.cli.dev_entrypoint import small_run, small_run_gpu
 
 from aracna.analysis.sim_inference_utils import get_simulated_infer
 
@@ -18,7 +17,7 @@ def small_train_cpu(args):
     # kinda gross but hydra just looks at CLI
     del sys.argv[1]
     sys.argv.append('experiment=simple_start')
-    test_runs()
+    small_run()
 
 
 @cli.command()
@@ -27,7 +26,7 @@ def small_train_gpu(args):
     # kinda gross but hydra just looks at CLI
     del sys.argv[1]
     sys.argv.append('experiment=simple_start')    
-    test_runs_gpu()
+    small_run_gpu()
 
 
 @cli.command(help="Run inference on simulated data. Ensure that on a100-GPU if running a Mamba model.")

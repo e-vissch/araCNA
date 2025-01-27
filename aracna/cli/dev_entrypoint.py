@@ -9,7 +9,7 @@ from aracna.src.train import train_from_config
 @hydra.main(
     version_base=None, config_path="../configs", config_name="train_config.yaml"
 )
-def test_runs(config: DictConfig):
+def small_run(config: DictConfig):
     config = process_config(config)
 
     ## overrides:
@@ -22,7 +22,7 @@ def test_runs(config: DictConfig):
 @hydra.main(
     version_base=None, config_path="../configs", config_name="train_config.yaml"
 )
-def test_runs_gpu(config: DictConfig):
+def small_run_gpu(config: DictConfig):
     config = process_config(config)
 
     ## overrides:
@@ -40,6 +40,6 @@ def test_sim_infer(model_key, read_depth=15, purity=0.87):
 
 
 if __name__ == "__main__":
-    # test_runs_gpu()
-    # test_runs() # should work on cpu
-    test_sim_infer("pjflljt4") # hyena model should work on cpu
+    small_run()
+    # small_run_gpu() # should work on cpu
+    # test_sim_infer("pjflljt4") # hyena model should work on cpu

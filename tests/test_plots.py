@@ -6,7 +6,7 @@ from notebook_analyses.plotting_utils import (
     get_read_depth_plot,
 )
 
-from aracna.tests.plot_helpers import get_real_plot
+from tests.plot_helpers import get_real_plot
 
 
 def get_test_profiles():
