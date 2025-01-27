@@ -37,7 +37,7 @@ setup(
     version="0.1.0",
     description="Project package to go with araCNA manuscript.",
     author="Ellen Visscher",
-    packages=find_packages(),
+    packages=['aracna'],
     install_requires=parse_requirements("requirements.txt"),
     extras_require={
         "a100_gpu": ["causal-conv1d>=1.1.0", "mamba-ssm"],  # Specify GPU dependencies
