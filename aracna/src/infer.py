@@ -62,7 +62,7 @@ def get_checkpointed_model(model_checkpoint, infer=True, task=None):
     # AracnaTrain.load_from_checkpoint creates recurrance if model has been iteratively
     # retrained, hence why we use this approach.
     model_path = package_model_path(model_checkpoint)
-    trained_model_info = torch.load(model_path, map_location=torch.device("cpu"))
+    trained_model_info = torch.load(model_path, map_location=torch.device("cpu"), weights_only=False) 
     # lightning will put module to device later, so always construct on cpu
     config = trained_model_info["hyper_parameters"]
     config.task.model_checkpoint = model_checkpoint  # get same config.
