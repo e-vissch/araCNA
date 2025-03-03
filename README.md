@@ -12,7 +12,7 @@ If you want to install on a100 GPU, then do `pip install .[a100_gpu]`. If you ha
 
 ### Development
 
-You can run either of these in editable mode (i.e using `pip install -e .`).
+You can run either of these in editable mode (i.e using `pip install -e .`), you may also want to review the [project overview](#project-overview) below.
 
 ## Demo code- on simulated data
 After installation
@@ -20,29 +20,12 @@ After installation
 - `araCNA_demo small-train-cpu` will start training a new model on the CPU, you can terminate whenever you like.
 - `araCNA_demo small-train-gpu` will start training a new model on the GPU, you can terminate whenever you like.
 
-## Project overview
-
-The project is structured as followed:
-
-- `aracna`: the package that is installed and allows training/inference, it includes:
-    - `src`: This is where all the deep learning code exists, where the model logic and architecture is defined.
-    - `configs`: This is where all the hydra configs exist for training the deep learning models. It goes in tandem with the `src` directory.
-    - `analysis`: This is where various scripts for performing analysis between methods, plotting etc exist.
-    - `araCNA-models.zip`: zip files with pretrained models, installation should manage unzipping for you. The araCNA-models dir is also where any new models that you train with wandb will automatically be located.
-
-- `workflow`: This is the workflows used to produce results for the manuscript from input BAMs. Please see below for more details on this. This is not included in the package distribution.
-- `notebook_analysis`: closely linked to `analysis` and where final plots were produced interactively. This is not included in the package distribution.
-
-
-## Note we edit some Mamba/Hyena definitions originally defined in:
-- [mamba-ssm](https://github.com/state-spaces/mamba)- see `src/models/bi-mamba.py` for definitions/changes
-- [hyena-dna](https://github.com/HazyResearch/hyena-dna)- most notably the `src/models/standalone_hyenadna.py`
 
 ## Running inference on tumour bam with already trained model
 To do this, you'll need to provide a SNP allele loci csv file.
 This is a file with headers: "chr", "position" "a0" "a1" with the reference and alternate alleles of common SNP loci. This file should be approximately 650k in length (if using with our pretrained models), as the models are trained up to this length, and will perform poorly if drastically different from this.
 
-Please see [Reference files](#ref), if you would like to reproduce our loci file. 
+Please see [Reference files](#reference-files), if you would like to reproduce our loci file. 
 
 Using this you can then run inference on your tumor bam file.
 You can run the following command to do this all at once:
@@ -105,29 +88,9 @@ This will output a file `snp_allele_set.csv` to the `snp_ref` dir to be used in 
 The choice of SNPs is unlikely to matter, as long as they are prevalent enough in the population to capture enough heterozygous loci in the sample. For example likely any 650k subset of [ascat](https://github.com/VanLoo-lab/ascat) reference alleles could be used. Models can also be trained to a longer sequence length (we tested successfully up to 1million but did not test longer than this), and then run on a longer SNP set. The main sequence length limitation will be the memory limit of your GPU.
 
 
-
-## Overview of src
-The structure of this codebase is generalised to make it easier to try out different approaches.
-This repository contains is the main source for the manuscript results, however some of the design has been implemented with further development in mind.
-
-- DataModules
-    - Where data logic belongs. At the moment we just have simulated datamodules but real datamodules could be easily added.
-    - The existing simulated allows for custom samplers for different kinds of simulation.
-    - The main sampler used in the manuscript is the `PurelySimulated` class
-
-- Models
-    - Where models belong - pytorch models that know nothing about lightning.
-
-- Task Info
-    - A task is kind of like a decoder head. We could have the entirely same base model, however, we might be able to represent the output in different ways- for example if we wanted an integer output then maybe we would have a task where the loss/decoder pair treats ouputs continuously and another that treats them as categories.
-    - This logic is not defined on the decoder, because you might want the same decoder architecture for multiple tasks. The decoder class is a static attribute of the task though.
-    - This logic is also decoupled from the datamodule, because you might want to train the same task on different data, or different tasks on the same data.
-    - At the moment there is only really the `CatPaired` task, and the various derivatives of it (supervised, unsupervised) etc.
-
-
 ## Training a model
 
-To train a model (using a GPU):
+To train your own model, you may want to review the [project overview](#project-overview) below. The command to train a model (using a GPU):
 
 ```
 araCNA_train trainer.accelerator=gpu trainer.devices=1 ${any_more_hydra_args}
@@ -151,6 +114,43 @@ If you have issues with `pip install .[a100_gpu]`, try the following (ensuring a
 - `conda install pytorch torchvision pytorch-cuda=12.4 -c pytorch -c nvidia`
 - `conda install cuda-toolkit=12.4 -c nvidia`
 - `pip install .[a100_gpu]`
+
+
+## Project overview
+
+The project is structured as followed:
+
+- `aracna`: the package that is installed and allows training/inference, it includes:
+    - `src`: This is where all the deep learning code exists, where the model logic and architecture is defined.
+    - `configs`: This is where all the hydra configs exist for training the deep learning models. It goes in tandem with the `src` directory.
+    - `analysis`: This is where various scripts for performing analysis between methods, plotting etc exist.
+    - `araCNA-models.zip`: zip files with pretrained models, installation should manage unzipping for you. The araCNA-models dir is also where any new models that you train with wandb will automatically be located.
+
+- `workflow`: This is the workflows used to produce results for the manuscript from input BAMs. Please see below for more details on this. This is not included in the package distribution.
+- `notebook_analysis`: closely linked to `analysis` and where final plots were produced interactively. This is not included in the package distribution.
+
+
+## Note we edit some Mamba/Hyena definitions originally defined in:
+- [mamba-ssm](https://github.com/state-spaces/mamba)- see `src/models/bi-mamba.py` for definitions/changes
+- [hyena-dna](https://github.com/HazyResearch/hyena-dna)- most notably the `src/models/standalone_hyenadna.py`
+
+## Overview of src
+The structure of this codebase is generalised to make it easier to try out different approaches.
+This repository contains is the main source for the manuscript results, however some of the design has been implemented with further development in mind.
+
+- DataModules
+    - Where data logic belongs. At the moment we just have simulated datamodules but real datamodules could be easily added.
+    - The existing simulated allows for custom samplers for different kinds of simulation.
+    - The main sampler used in the manuscript is the `PurelySimulated` class
+
+- Models
+    - Where models belong - pytorch models that know nothing about lightning.
+
+- Task Info
+    - A task is kind of like a decoder head. We could have the entirely same base model, however, we might be able to represent the output in different ways- for example if we wanted an integer output then maybe we would have a task where the loss/decoder pair treats ouputs continuously and another that treats them as categories.
+    - This logic is not defined on the decoder, because you might want the same decoder architecture for multiple tasks. The decoder class is a static attribute of the task though.
+    - This logic is also decoupled from the datamodule, because you might want to train the same task on different data, or different tasks on the same data.
+    - At the moment there is only really the `CatPaired` task, and the various derivatives of it (supervised, unsupervised) etc.
 
 
 ## Overview of workflows
