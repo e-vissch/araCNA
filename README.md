@@ -1,5 +1,24 @@
 # araCNA - a copy number alteration caller for somatic cells
 
+## Installation
+
+Required dependencies are listed in `requirements.txt` and this project assumes python 3.12 or above.
+
+Installation time is less than 10 minutes. 
+
+If you want install on a CPU/non-a100 gpu, do `pip install .`. Only Hyena models will run/train in this environment.
+
+If you want to install on a100 GPU, then do `pip install .[a100_gpu]`. If you have issues with this, ensure your cudatoolkit, cuda and pytorch installations are aligned, and see [below](#troubleshooting-install) for troubleshooting. 
+
+### Development
+
+You can run either of these in editable mode (i.e using `pip install -e .`).
+
+## Demo code- on simulated data
+After installation
+- You can run `araCNA_demo sim-infer` to run inference using the Hyena model. The output should be a plot. Note this samples a simulated dataset so if you run multiple times you can see the prediction on multiple samples of varying sampled complexity with length up to 650k. For most simulated samples, the model is very good. This should take less than a minute.
+- `araCNA_demo small-train-cpu` will start training a new model on the CPU, you can terminate whenever you like.
+- `araCNA_demo small-train-gpu` will start training a new model on the GPU, you can terminate whenever you like.
 
 ## Project overview
 
@@ -18,91 +37,6 @@ The project is structured as followed:
 ## Note we edit some Mamba/Hyena definitions originally defined in:
 - [mamba-ssm](https://github.com/state-spaces/mamba)- see `src/models/bi-mamba.py` for definitions/changes
 - [hyena-dna](https://github.com/HazyResearch/hyena-dna)- most notably the `src/models/standalone_hyenadna.py`
-
-
-## Installation
-
-Unfortunately due to pytorch and CUDA interplay, `setup.py` cannot manage everything directly.
-We recommend you read all the installation instructions before running any commands, so you know which option to choose, you may run into issues on the GPU if you do not install in the correct order.
-
-Required dependencies are listed in `requirements.txt` and this project assumes python 3.12 or above.
-
-Installation time is 10 minutes. 
-
-
-### Setup without GPU
-
-You can still use hyena without a GPU (although training will be slow). But the already trained model can be used for inference on a CPU.
-
-For this you can first create environment (e.g using conda):
-
-- `conda create --name aracna python=3.12`
-- `conda activate aracna`
-
-And then inside your environment:
-
-`pip install .`
-
-This is also nice for local dev on a CPU (though in this case you'll want to install in editable mode `pip install -e .`)
-
-### Setup on any GPU
-
-If you want to train a Hyena model, or run the Mamba pretrained model this is what you should do (noting you must be on a computer with a GPU).
-
-If you have a version of CUDA already installed, then install torch with that version, run `nvidia-smi` or `nvcc --version`. If this shows a driver of `12.6` it means that it can support CUDA up until that version.
-
-If you have a conda you can install different CUDA software versions, or else if you are on the HPC- they might have prepackaged CUDA/pytorch modules available.
-
-
-#### If no available CUDA versions, you need to use conda which will handle cuda install for you.
-You can do something like the following:
-
-`conda install pytorch torchvision pytorch-cuda=12.4 -c pytorch -c nvidia`
-
-
-#### Using existing CUDA verison
-
-Inside your environment run:
-
-`pip install torch torchvision --index-url https://download.pytorch.org/whl/cu<version>`
-
-Where `<version>` might be `124` for CUDA 12.4. Note this URL might change in future, so worth checking the pytorch website. Note also, only certain CUDA versions come directly compiled for pytorch, if you want to use a different CUDA version with pytorch then you will have to compile directly from source.
-
-What might be easier is installing as above with conda, that will update the CUDA version in your local environment to one compatible with pytorch.
-
-#### Once compatible pytorch + CUDA installed
-
-You can simply run `pip install .`. However, if you want to run with Mamba, on a100 gpu- see below.
-
-
-### Setup with a100 GPU
-
-If you want to train/infer using a Mamba model, then you'll need to be on an a100 gpu. For one the Mamba dependencies to install, you will also need cuda-toolkit. If you have a conda/cuda module on your HPC you can first try loading that then running `pip install .['a100_gpu']`, if that doesn't work then please follow the below instructions.
-
-Unfortunately, installing cuda-toolkit can be a pain due to glitchy dependency management, if you do not ensure compatible versions between cuda/pytorch/cuda-toolkit.
-The following has been tested although might fail in future:
-
-- `conda install pytorch torchvision pytorch-cuda=12.4 -c pytorch -c nvidia`
-- `conda install cuda-toolkit=12.4 -c nvidia`
-- `pip install .[a100_gpu]`
-
-If you have problems installing have a look at [blog post](https://www.blopig.com/blog/2024/01/tip-and-tricks-to-correct-a-cuda-toolkit-installation-in-conda/) for tips to fix.
-
-Once you do this once, araCNA using Hyena should work on any HPC architecture (CPU/GPU), and Mamba will work on the a100 GPU.
-
-
-### Development
-
-You can run either of these in editable mode (i.e using `pip install -e .`) but note that in this case the araCNA-models directory may need to be manually unzipped.
-
-## Demo code- on simulated data
-
-If you would like to quickly demo the code, without installing on the GPU, please follow CPU install instructions.
-- You can then run `araCNA_demo sim-infer` to run inference using the Hyena model. The output should be a plot. Note this samples a simulated dataset so if you run multiple times you can see the prediction on multiple samples of varying sampled complexity with length up to 650k. For most simulated samples, the model is very good.
-- `araCNA_demo small-train-cpu` will start training a new model on the CPU.
-- `araCNA_demo small-train-gpu` will start training a new model on the GPU.
-
-
 
 ## Running inference on tumour bam with already trained model
 To do this, you'll need to provide a SNP allele loci csv file.
@@ -204,6 +138,19 @@ This project uses both [pytorch lightning](https://lightning.ai/docs/pytorch/sta
 Note if you forget the `trainer.accelerator=gpu trainer.devices=1` for a Mamba model it will not run.
 
 If you want to use/edit the config yamls for training then you should install in editible mode. 
+
+
+## Troubleshooting Install
+
+Installing Mamba can be difficult as it requires having aligned cuda-toolkit, cuda and pytorch, which isn't guaranteed under pip or conda.
+
+If you have issues with `pip install .[a100_gpu]`, try the following (ensuring a clean environment and that you are on an a100 GPU):
+
+- `conda create --name aracna python=3.12`
+- `conda activate aracna`
+- `conda install pytorch torchvision pytorch-cuda=12.4 -c pytorch -c nvidia`
+- `conda install cuda-toolkit=12.4 -c nvidia`
+- `pip install .[a100_gpu]`
 
 
 ## Overview of workflows
