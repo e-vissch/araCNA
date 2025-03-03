@@ -10,9 +10,6 @@ If you want install on a CPU/non-a100 gpu, do `pip install .`. Only Hyena models
 
 If you want to install on a100 GPU, then do `pip install .[a100_gpu]`. If you have issues with this, ensure your cudatoolkit, cuda and pytorch installations are aligned, and see [below](#troubleshooting-install) for troubleshooting. 
 
-### Development
-
-You can run either of these in editable mode (i.e using `pip install -e .`), you may also want to review the [project overview](#project-overview) below.
 
 ## Demo code- on simulated data
 After installation
@@ -100,7 +97,7 @@ This project uses both [pytorch lightning](https://lightning.ai/docs/pytorch/sta
 
 Note if you forget the `trainer.accelerator=gpu trainer.devices=1` for a Mamba model it will not run.
 
-If you want to use/edit the config yamls for training then you should install in editible mode. 
+If you want to use/edit the config yamls for training then you should install in editible mode i.e `pip install -e .`.
 
 
 ## Troubleshooting Install
