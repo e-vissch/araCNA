@@ -8,7 +8,7 @@ from aracna.src.models import standalone_hyenadna as hyena
 
 try:
     from mamba_ssm.models import mixer_seq_simple as mamba
-except ImportError:
+except (ImportError, RuntimeError):
     # if on cpu/local
     mamba = None
 

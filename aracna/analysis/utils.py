@@ -156,11 +156,41 @@ def get_detailed_df(infer_info, base_dict, res_dict, window_sizes):
     return aracna_df
 
 
-def get_aracna_dfs(infer_info, res_dict, default_window=500, detailed=False, window_sizes=(250, 500)):
+def get_segment_df(aracna_df):
+    base = (aracna_df[["chr","major_CN", "minor_CN"]] != aracna_df[["chr", "major_CN", "minor_CN"]].shift(1)).any(axis=1)
+    start_values = aracna_df[base].index.values.tolist() 
+    end_values = (aracna_df[base].index - 1)[1:].values.tolist() + [base.shape[0] - 1]
+    segment_df = aracna_df.iloc[start_values][['chr', 'position', 'major_CN', 'minor_CN']].rename(columns={"position": "startpos"}).reset_index(drop=True)
+    segment_df["endpos"] = aracna_df.iloc[end_values]['position'].reset_index(drop=True)
+    return segment_df[['chr', 'startpos', 'endpos', 'major_CN', 'minor_CN']].astype(int)
+
+
+def get_summary_info(aracna_df):
+    segment_df = get_segment_df(aracna_df)
+    segment_df['dist'] = segment_df['endpos'] -  segment_df['startpos'] 
+    major_props = segment_df.groupby(['major_CN'])['dist'].sum()/segment_df['dist'].sum()
+    if major_props[major_props.index >= 4].sum() > 0.4:
+        WGD = 2
+    elif major_props[major_props.index >= 3].sum() > 0.5:
+        WGD = 1
+    else:
+        WGD = 0
+
+    segment_df['total_CN'] = segment_df['major_CN'] + segment_df['minor_CN']
+    ploidy = (segment_df['total_CN']*segment_df['dist']).sum()/segment_df['dist'].sum()
+    major_mode = segment_df.groupby(['major_CN'])['dist'].sum().sort_values(ascending=False).index[0]
+    minor_mode = segment_df.groupby(['minor_CN'])['dist'].sum().sort_values(ascending=False).index[0]
+
+    result_dict = {"major_mode": major_mode, "minor_mode": minor_mode, "likely_WGD": WGD, 'ploidy': ploidy}
+
+    return segment_df, result_dict
+
+
+def get_aracna_dfs(infer_info, res_dict, read_name="read_depth",default_window=500, detailed=False, window_sizes=(250, 500)):
     base_dict = {
             "chr": res_dict["positional_info"][0, :, 1],
             "position": res_dict["positional_info"][0, :, 0],
-            "read_depth": res_dict["input"][0, :, 0],
+            read_name: res_dict["input"][0, :, 0],
             "BAF": res_dict["input"][0, :, 1]
             }
 
@@ -186,16 +216,22 @@ def get_aracna_dfs(infer_info, res_dict, default_window=500, detailed=False, win
         aracna_df["major_CN"] == infer_info.can_train_upto_tot_CN + 1, "comment"
     ] = f"tot CN est > {infer_info.can_train_upto_tot_CN}"
 
-    return aracna_df, pd.DataFrame(res_dict["globals"])
+
+    segment_df, summary_info = get_summary_info(aracna_df)
+ 
+    return aracna_df, pd.DataFrame(res_dict["globals"] | summary_info), segment_df
 
 
-def write_aracna_csvs(infer_info, res_dict, out_stub, detailed=False):
-    aracna_df, globals_df = get_aracna_dfs(infer_info, res_dict, detailed=detailed)
+def write_aracna_csvs(infer_info, res_dict, out_stub, read_name="read_depth", detailed=False):
+    aracna_df, globals_df, segment_df = get_aracna_dfs(infer_info, res_dict, read_name=read_name, detailed=detailed)
     os.makedirs(os.path.dirname(out_stub), exist_ok=True)
     aracna_df.to_csv(
         f"{out_stub}aracna_results_{infer_info.code_name}.csv", index=False
     )
     globals_df.to_csv(
         f"{out_stub}aracna_globals_{infer_info.code_name}.csv", index=False
+    )
+    segment_df.to_csv(
+        f"{out_stub}aracna_segments_{infer_info.code_name}.csv", index=False
     )
     return aracna_df, globals_df

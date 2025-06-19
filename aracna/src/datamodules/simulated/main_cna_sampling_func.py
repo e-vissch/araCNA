@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from scipy.stats import trim_mean
 
 
 def sample_artifacts(sequence_length, min_length=5, max_length=500, avg_interval=1e3):
@@ -45,14 +46,15 @@ def sample_baf(
         (np.abs(minor_allele_freq - 1) < 1e-6) | (np.abs(minor_allele_freq) < 1e-6)
     )
 
-    num_reads = np.random.poisson(reads)
+    # num_reads = np.random.poisson(reads)
+    num_reads = reads.round().astype(int)
     num_ma = np.random.binomial(num_reads, np.clip(minor_allele_freq, 0, 1))
     maf = np.divide(
         num_ma, num_reads, where=num_reads != 0, out=np.zeros_like(minor_allele_freq)
     )  # 0/0 = 0
     df = max(2, base_df * 10 * baf_scale)
 
-    # Base noise for heterozygous loci
+    # Base noise for homozygous loci
     baf_noise = 0.2 * baf_scale * np.random.standard_t(df=df, size=maf.shape)
 
     baf_noise[heterozygous_mask] = baf_scale * np.random.standard_t(
@@ -79,7 +81,13 @@ def sample_read_params(
     read_depth_scale = round(np.random.uniform(*read_depth_scale_range), 2) * read_depth
     baf_scale = round(np.random.uniform(*baf_scale_range), 3)
     purity = round(np.random.uniform(*purity_range), 2)
-    return read_depth, read_depth_scale, baf_scale, purity
+    
+    return {
+        "read_depth": read_depth,
+        "baf_scale": baf_scale,
+        "purity": purity,
+        "read_depth_scale": read_depth_scale,
+    }
 
 
 def sample_cnas_from_parental(
@@ -128,12 +136,12 @@ def sample_cnas_from_parental(
         baf_scale,
     )
 
-    return (
+    return [
         reads,
         minor_allele_freq_meas,
         np.max(n_parental, axis=1),
         minor_copy_number,
-    )
+    ]
 
 
 def sample_cnas_from_input_ranges(
@@ -147,8 +155,84 @@ def sample_cnas_from_input_ranges(
     input_params = sample_read_params(
         read_depth_range, read_depth_scale_range, baf_scale_range, purity_range
     )
-    output_params = sample_cnas_from_parental(n_parental, *input_params, **kwargs)
+    output_params = sample_cnas_from_parental(n_parental, **input_params, **kwargs)
     return input_params, output_params
+
+
+def _inner_logr(n_parental,
+    read_depth,
+    read_depth_range,
+    read_depth_scale=0.5,
+    baf_scale=0.05,
+    purity=1,
+    inject_homoz_loci=False,
+    max_total=10,
+):
+    sequence_length = n_parental.shape[0]
+    minor_copy_number = np.min(n_parental, axis=1)
+
+    sample_parental = n_parental
+
+    total_c = purity * sample_parental.sum(axis=1).astype(int) + 2 * (1 - purity)
+    snps = np.random.binomial(n=1, p=0.5, size=(sequence_length, 2))
+    minor_c = (purity * snps * sample_parental + (1 - purity) * snps).sum(axis=1)
+    minor_allele_freq = np.divide(
+        minor_c, total_c, where=total_c != 0, out=np.zeros_like(minor_c)
+    )  # 0/0 = 0
+
+    sample_total_c = total_c
+
+    reads = np.clip(
+        sample_total_c * read_depth
+        + read_depth_scale * np.random.standard_t(df=2, size=sequence_length),
+        1,
+        None,
+    )
+
+    read_depth_n = round(np.random.uniform(*read_depth_range), 2)
+    ratio =reads/(2 * read_depth_n)
+    logr = np.log2(ratio/trim_mean(ratio, proportiontocut=0.05))
+    logr = np.clip(logr, a_min=np.log2(1e-6), a_max=np.log2(1e6))
+
+    baf = sample_baf(
+        reads,
+        minor_allele_freq,
+        snps,
+        inject_homoz_loci,
+        baf_scale,
+    )
+
+    return [
+        logr,
+        baf,
+        np.max(n_parental, axis=1),
+        minor_copy_number,
+    ]
+
+
+
+def sample_cnas_logr(
+    n_parental,
+    read_depth_range,
+    read_depth_scale_range,
+    baf_scale_range,
+    purity_range,
+    **kwargs
+):
+    input_params = sample_read_params(
+        read_depth_range, read_depth_scale_range, baf_scale_range, purity_range
+    )
+    output_params = _inner_logr(n_parental, read_depth_range = read_depth_range, **input_params, **kwargs)
+
+    purity = input_params["purity"]
+    total_c = purity * n_parental.sum(axis=1).astype(int) + 2 * (1 - purity)
+
+    ploidy = total_c.mean()
+
+    input_params |= {"ploidy": ploidy}
+
+    return input_params, output_params
+
 
 
 def get_input_profile(short_profile, sub_seqlen):

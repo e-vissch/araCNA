@@ -127,6 +127,6 @@ for (penalty in penalty_terms) {
   write.csv(QC, file = paste0(out_dir, "/qc.csv"), row.names = FALSE)
   save(ascat.bc, ascat.output, QC, file = paste0(out_dir, "/ASCAT_objects.Rdata"))
   }) 
-  new_timing <- append_time(total_timing, "main_ascat", new_timing)
-  write.csv(timing_results, file = paste0(out_dir, "/timings.csv"), row.names = FALSE)
+  new_timing <- append_time(total_timing, "total_wo_preprocces", new_timing)
+  write.csv(new_timing, file = paste0(out_dir, "/timings.csv"), row.names = FALSE)
 }

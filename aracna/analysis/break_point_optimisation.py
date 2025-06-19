@@ -41,7 +41,7 @@ def find_optimal_sequence(p, lambd):
 
 def opt_num_break_pts(prob_arr, lambda_value):
     max_tot_cn = 8
-    cat_ls = [(i - j, j) for i in range(max_tot_cn + 1) for j in range(i // 2 + 1)]
+    cat_ls = [(i - j, j) for i in range(max_tot_cn + 1) for j in range(i // 2 + 1)] + [(np.nan, np.nan)] # nans for surplus cat
     optimal_sequence = find_optimal_sequence(prob_arr, lambda_value)
     new_seq = np.array(cat_ls)[optimal_sequence]
     num_break_pts = get_break_points(new_seq)

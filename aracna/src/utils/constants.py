@@ -8,6 +8,7 @@ MODEL_AFFECTED_TASK_INFO_KEYS = [
 ]
 
 READ_KEY = "read_depth"
+PLOIDY_KEY = "ploidy"
 PURITY_KEY = "purity"
 SEQ_TOKEN = 0
 GLOBAL_TOKEN = 1

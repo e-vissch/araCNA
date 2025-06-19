@@ -62,7 +62,7 @@ rule get_bed:
             end_pos = $2
             print chr "\t" start_pos "\t" end_pos
         }' > {output.snp_bed}
-    """he
+    """
 
 
 

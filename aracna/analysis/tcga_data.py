@@ -103,7 +103,7 @@ def get_sample(base_dir, case, sample_type="tumor"):
 
 def plot_aracna_single(aracna_df, model_key, plot_file, include_prob=False):
     val_list = [
-        ["major_smoothed_window_opt_500", "minor_smoothed_window_opt_500"],
+        ["major_CN", "minor_CN"],
     ]
 
     titles = (
@@ -158,7 +158,9 @@ def write_case_csvs(
     infer_info = get_infer_info(model_key, task=task)
     pos, inp = get_torched_tcga_data(input_file, depth_cname=depth_type)
     result = get_result(infer_info, pos, inp, max_len)
-    aracna_df, globals_df = write_aracna_csvs(infer_info, result, out_stub=out_stub, detailed=detailed)
+
+    read_name = "read_depth" if "depth" in depth_type else "logr"
+    aracna_df, globals_df = write_aracna_csvs(infer_info, result, out_stub=out_stub, read_name= read_name, detailed=detailed)
     if include_plot:
         plot_aracna_single(aracna_df, model_key, f"{out_stub}_plot.png")
 

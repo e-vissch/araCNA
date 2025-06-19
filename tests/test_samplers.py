@@ -1,5 +1,7 @@
 import hydra
 import matplotlib.pyplot as plt
+from aracna.src.infer import InferenceInfo
+from notebook_analyses.plotting_functions import plot_inputs
 from notebook_analyses.plotting_utils import get_read_depth_plot
 from omegaconf import DictConfig
 from aracna.src.datamodules.simulated.cna_real_profile_sampler import (
@@ -45,16 +47,18 @@ def test_global_sampler():
     return
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="config.yaml")
+@hydra.main(version_base=None, config_path="../aracna/configs", config_name="train_config.yaml")
 def test_datamodule(config: DictConfig):
     config = process_config(config)
     model = AracnaTrain(config)
     # hparams and config usually the same, depends on task.
     datamodule = get_data(model.task_info, model.hparams.task, config.loader)
     datamodule.set_curr_batch_size(1)
-    get_read_depth_plot(
-        15.0, purity=0.75, plot_n=10000, paired=True, tm=model, dm=datamodule
-    )
+
+    data = next(iter(datamodule.val_dataloader()))
+
+    plot_inputs(data[1])
+
     plt.show()
     return
 

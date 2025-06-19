@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - from_checkpoint
+
+task:
+  info:
+    name: logr
+    loss_weights: [1, 1] # ploidy, purity
+
+  dataset:
+    sampling_name: "logr"
+    read_depth_scale_range: [0.01, 0.05] # as proportion of read depth
+    baf_scale_range: [0.01, 0.05]
+    read_depth_range: [10, 50]
+
+trainer:
+  gradient_clip_val: 1.0

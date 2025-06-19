@@ -5,7 +5,7 @@ from aracna.analysis.plot_comparison import get_plot_from_val_list
 
 def get_res_from_targets(infer_info):
     result = get_sim_result(infer_info)
-    aracna_df, globals_df = get_aracna_dfs(infer_info, result[0])
+    aracna_df, globals_df, _ = get_aracna_dfs(infer_info, result[0])
     targets = result[0]['targets'].squeeze()
     aracna_df["true_major"] = targets[:, 0].cpu()
     aracna_df["true_minor"] = targets[:, 1].cpu()

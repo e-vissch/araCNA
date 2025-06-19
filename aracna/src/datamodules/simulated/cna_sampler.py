@@ -4,12 +4,13 @@ import numpy as np
 from lightning.pytorch.callbacks import Callback
 from aracna.src.datamodules.simulated.main_cna_sampling_func import (
     sample_cnas_from_input_ranges,
+    sample_cnas_logr,
 )
 from aracna.src.datamodules.simulated.sample_datamodule import BaseSampler
 from aracna.src.task_info.task_info import SeqInfo
 from aracna.src.utils.constants import CHROM_SIZE_DICT, N_CHROM
 
-sampling_func_register = {"paired": sample_cnas_from_input_ranges}
+sampling_func_register = {"paired": sample_cnas_from_input_ranges, "logr": sample_cnas_logr}
 
 
 class ProfileSampler(BaseSampler):
@@ -146,23 +147,14 @@ class ProfileSampler(BaseSampler):
             **self.sample_kwargs,
         )
 
-        read_depth, read_depth_scale, baf_scale, purity = input_params
-
         self.write_data_to_arrays(output_data)
-
-        input_info = {
-            "read_depth": read_depth,
-            "baf_scale": baf_scale,
-            "purity": purity,
-            "read_depth_scale": read_depth_scale,
-        }
 
         return (
             (self.snp_locs, self.chr_vals),  # positional info
             (self.reads, self.minor_allele_freq_meas),  # inputs
             (self.major_parental, self.minor_parental),  # targets
             {"sample_len": self.end_seq - self.start_seq},
-            input_info,
+            input_params,
         )
 
 
