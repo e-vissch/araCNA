@@ -63,10 +63,11 @@ def run_inference_on_bam(
 @click.option("--file-prefix", default="")
 @click.option("--detailed", default=False)
 @click.option("--include-plot", default=False)
-def get_aracna_outputs(baf_rd_file, model_key, out_dir, file_prefix, detailed, include_plot):
+@click.option("--depth-type", default='depth', help="Do not change this unless you are using code hwebinf5 or another model trained to accept logR input.")
+def get_aracna_outputs(baf_rd_file, model_key, out_dir, file_prefix, detailed, include_plot, depth_type):
     out_stub = f"{out_dir}/{file_prefix}"
     write_case_csvs(
-        out_stub, model_key, input_file=baf_rd_file, detailed=detailed, include_plot=include_plot
+        out_stub, model_key, input_file=baf_rd_file, depth_type=depth_type, detailed=detailed, include_plot=include_plot
     )
 
 
