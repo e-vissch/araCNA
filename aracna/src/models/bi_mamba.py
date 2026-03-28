@@ -22,7 +22,7 @@ try:
     from mamba_ssm.modules.mlp import GatedMLP
     from mamba_ssm.ops.triton.ssd_combined import mamba_split_conv1d_scan_combined
 
-except ImportError:
+except (ImportError, RuntimeError):
     Mamba2, Mamba = None, None
     Block, MHA, GatedMLP = None, None, None
     mamba_split_conv1d_scan_combined = None
@@ -34,7 +34,7 @@ try:
     from mamba_ssm.ops.triton.layernorm_gated import RMSNorm as RMSNormGated
     from mamba_ssm.ops.triton.selective_state_update import selective_state_update
 
-except ImportError:
+except (ImportError, RuntimeError):
     RMSNormGated = None
     RMSNorm = None
     selective_state_update = None

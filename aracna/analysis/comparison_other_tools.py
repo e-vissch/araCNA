@@ -17,7 +17,7 @@ def join_together(df_to_join, other_df, join_cols, prefix, join=""):
     # note, df_to_join and other_df referenced in query string, so they are used.
     query_string = f"""
     SELECT df_to_join.*, {','.join(
-        f'segments.{col} as {prefix}_{col}' for col in join_cols
+        f'segments.{col} as "{prefix}_{col}"' for col in join_cols
         )}
     FROM other_df segments
     {join}JOIN df_to_join df_to_join
@@ -72,19 +72,21 @@ def get_other_df(fname, chr_val="chr"):
     return model_df
 
 
-def get_aracna_dfs(aracna_dir, aracna_prefix, aracna_keys):
+def get_aracna_dfs(aracna_dir, aracna_prefix, aracna_keys, read_keys = None):
     for i, aracna_key in enumerate(aracna_keys):
         aracna_f = f"{aracna_dir}/{aracna_prefix}results_{aracna_key}.csv"
+        read_key = "read_depth" if not read_keys else read_keys[i]
         aracna_df = (
             pd.read_csv(aracna_f)
-            .set_index(["chr", "position", "read_depth", "BAF"])
+            .set_index(["chr", "position", read_key, "BAF"])
             .add_prefix(f"{aracna_key}_")
-            .reset_index(level=["read_depth", "BAF"])
+            .reset_index(level=[read_key, "BAF"])
         )
         if i == 0:
             result_df = aracna_df
         else:
-            aracna_df.drop(columns=["read_depth", "BAF"], inplace=True)
+            drop_cols = [read_key, "BAF"] if read_key in aracna_df else ["BAF"]
+            aracna_df.drop(columns=drop_cols, inplace=True)
             result_df = result_df.join(aracna_df)
 
     return result_df.reset_index()
@@ -183,6 +185,9 @@ def get_recon(avg_rd_per_cn, purity, parental_cn):
     tot_cn = get_sample_cns(purity, parental_cn).sum(axis=-1)
     return avg_rd_per_cn * tot_cn
 
+def get_read_ratio_recon(log_read_ratio, purity, parental_cn):
+    return (log_read_ratio - 1 +  np.log2(get_sample_cns(purity, parental_cn).sum(axis=-1)))
+
 
 def get_approx_recon(
     read_depth, purity, ploidy, parental_cn, trim_ratio=0.05, use_ploidy=True
@@ -218,6 +223,14 @@ def get_approx_tot_recon(read_depth, total_cn, purity=1, trim_ratio=0.05):
     avg_rd, mask = get_robust_mean(read_depth, trim_ratio)
     avg_rd_per_cn = avg_rd / samp_cn[mask].mean()
     return get_recon(avg_rd_per_cn, purity, samp_cn[:, None])
+
+
+
+def get_recon_aracna(read_depth, glob_series, parental_cn):
+    if np.isnan(glob_series['read_depth_per_cn']):
+        return get_approx_recon(read_depth, glob_series['purity'], None, parental_cn,  use_ploidy=False)
+    else:
+        return get_recon(glob_series['read_depth_per_cn'], glob_series['purity'], parental_cn)
 
 
 def get_baf_rmse(
@@ -353,9 +366,9 @@ def get_reconstruction_metrics(
             global_info.loc["ascat", "purity"],
         ),
     } | {
-        key: get_recon(
-            global_info.loc["_".join(key.split("_")[:2]), "read_depth_per_cn"],
-            global_info.loc["_".join(key.split("_")[:2]), "purity"],
+        key: get_recon_aracna(
+            read_depth,
+            global_info.loc["_".join(key.split("_")[:2])],
             val_dict[key],
         )
         for key in val_dict

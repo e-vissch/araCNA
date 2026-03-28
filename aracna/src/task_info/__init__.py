@@ -1,3 +1,4 @@
+from .paired_w_logr import PairedLogRInfo, SupLogR, UnsupLogR
 from .cat_paired import PairedInfo, SupervisedTrainInfo, UnsupervisedTrainInfo
 from .task_info import TaskInfo
 
@@ -6,4 +7,7 @@ registry = {
     "paired": SupervisedTrainInfo,
     "unsupervised_paired": UnsupervisedTrainInfo,
     "infer_paired": PairedInfo,
+    "logr": SupLogR,
+    "unsup_logr": UnsupLogR,
+    "infer_logr": PairedLogRInfo,
 }

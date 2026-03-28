@@ -42,10 +42,16 @@ And then can run inference with:
 
 `araCNA_infer get-aracna-outputs --baf-rd-file <link to tumor_BAF_rd.txt> --model-key <one of {pjflljt4,qwsvrrgk} (latter needs a100 gpu)> --out-dir <link to desired out dir>`
 
+Note, we also have a mamba-based model that works on corrected logR outputs, with code "hwebinf5".
+If you would like to use this, then ensure you have a logr_baf.txt CSV file with columns/headers: chr,position,logr,BAF. This can be easily generated for e.g by using ASCAT preprocessing prepareHTS function, and joining together output files tumor_LogR and tumor_BAF for a given sample. Ideally this would be around 650k pm 50k, given the model is trained to this length. Then you can run inference simply by doing:
+
+`araCNA_infer get-aracna-outputs --baf-rd-file <link to tumor_BAF_logR.txt> --model-key hwebinf5 --out-dir <link to desired out dir> --depth-type logr` 
+
 Inference on preprocessed files should run within a few minutes- even on a CPU. The output files are:
 
-- <output_dir>aracna_results_{model-key}.csv: A csv file containing each genomic location, the read depth, the BAF, and the major and minor copy numbers at each location. These can easily be processed to give segment CNs by looking at locations where minor/major CNs change.
-- <output_dir>aracna_globals_{model-key}.csv: A csv containing the read depth (per copy number) estimation and the purity estimation. 
+- <output_dir>aracna_results_{model-key}.csv: A csv file containing each genomic location, the read depth, the BAF, and the major and minor copy numbers at each location.
+- <output_dir>aracna_segments_{model-key}.csv: A csv file containing segment CNs based on the above.
+- <output_dir>aracna_globals_{model-key}.csv: A csv containing the read depth (per copy number) estimation and the purity estimation, or ploidy estimation if using the logR based model. It also contains WGD estimation. 
 
 You can also do 
 

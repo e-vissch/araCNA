@@ -41,6 +41,10 @@ class PairedInfo(TaskInfo):
     @property
     def supervised_predict_keys(self):
         return [READ_KEY, PURITY_KEY]
+    
+    @property
+    def read_key(self):
+        return self.supervised_predict_keys[0]
 
     @cached_property
     def target_category_dict(self):
@@ -350,7 +354,7 @@ class UnsupervisedTrainInfo(PairedInfo, TrainTaskInfo):
         return get_stacked_batch_loss(most_likely_snp_baf_recon, sample_len)
 
     def recon_loss(self, input, output, sample_len, **_):
-        read_depth = output[self.glob_dim][:, self.key_mapping[READ_KEY]]
+        read_depth = output[self.glob_dim][:, self.key_mapping[self.read_key]]
         allelic_cns = self.get_allelic_copy_numbers(*output)
         return (
             self.read_recon_loss(
@@ -386,7 +390,7 @@ class UnsupervisedTrainInfo(PairedInfo, TrainTaskInfo):
 
 
 @dataclass
-class SupervisedTrainInfo(UnsupervisedTrainInfo, TrainTaskInfo):
+class SupervisedTrainInfo(UnsupervisedTrainInfo):
     read_recon_weight: float = 1e-3
     baf_recon_weight: float = 1e-3
 
@@ -468,9 +472,9 @@ class SupervisedTrainInfo(UnsupervisedTrainInfo, TrainTaskInfo):
 
     def recon_loss(self, input, output, targets, sample_len, global_info, **_):
         read_depth = (
-            global_info[READ_KEY]
+            global_info[self.read_key]
             if self.supervised_read_recon
-            else output[self.glob_dim][:, self.key_mapping[READ_KEY]]
+            else output[self.glob_dim][:, self.key_mapping[self.read_key]]
         )
         allelic_cns = self.get_allelic_copy_numbers(
             output[self.seq_dim], output[self.glob_dim]
@@ -495,7 +499,7 @@ class SupervisedTrainInfo(UnsupervisedTrainInfo, TrainTaskInfo):
         loss_tuple = (
             self.sequence_loss(output, targets, sample_len),
             *self.supervised_loss(output, global_info),
-            *self.recon_loss(input, output, targets, sample_len, global_info),
+            *self.recon_loss(input, output, targets, sample_len, global_info=global_info),
         )
 
         weights_tuple = (

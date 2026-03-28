@@ -4,7 +4,7 @@ from omegaconf import DictConfig, OmegaConf
 from aracna.configs import schemas
 
 
-@hydra.main(config_path="../configs", config_name="config")
+@hydra.main(config_path="../aracna/configs", config_name="train_config")
 def test_config_files(config: OmegaConf):
     # for this to work need to remove default base_schema from config.yaml
     assert config.trainer
@@ -18,8 +18,8 @@ def test_config_files(config: OmegaConf):
 def test_config_w_schema():
     @hydra.main(
         version_base=None,
-        config_path="../configs",
-        config_name="config",
+        config_path="../aracna/configs",
+        config_name="train_config",
     )
     def inner(_cfg: DictConfig) -> None:
         cfg: schemas.Config = OmegaConf.to_object(

@@ -33,22 +33,7 @@ def apply_montserrat(func):
 
 
 @apply_montserrat
-def get_plot_from_val_list(
-    joined_df,
-    val_list,
-    titles,
-    model_keys,
-    read_ylim=300,
-    save_file=None,
-    window_size=100,
-    include_prob=True,
-    colors=None,
-    max_vals=None,
-    prob_scale=1.5,
-    include_chrom=True,
-    max_total=8,
-    subsample=None,
-):
+def get_plot_from_val_list(joined_df, val_list, titles, model_keys, read_ylim=300, save_file=None, window_size=100, include_prob=True, colors=None, max_vals=None, prob_scale=1.5, include_chrom=True, max_total=8, max_min=4, subsample=None, override_tot=None):
     row_adjust = int(len(val_list[0]) > 1)
 
     if subsample is not None:
@@ -60,10 +45,8 @@ def get_plot_from_val_list(
     fig, axes = plt.subplots(
         nrows=n_rows,
         ncols=n_cols,
-        figsize=(3 * n_cols, 2 * n_rows),
-        gridspec_kw={
-            "height_ratios": [1] * n_other_rows + [prob_scale] * int(include_prob)
-        },
+        figsize=(3*n_cols, 2*n_rows),
+        gridspec_kw={"height_ratios": [1] * n_other_rows + [prob_scale]*int(include_prob)},
     )
     res = [joined_df["read_depth"].values, joined_df["BAF"].values]
 
@@ -83,10 +66,12 @@ def get_plot_from_val_list(
             max_adjust.append(0)
             includes_na = False
 
-        int_vals = torch.tensor(rel_df.fillna(0).values).long()
+        int_vals = torch.tensor(rel_df.fillna(0).values).long() 
         _max_vals.append(int_vals.max().item())
+
+        oh_classes = max(int_vals.max(), max_total + 1)
         if len(vals) == 1:  # hmm
-            one_hot_tot = torch.nn.functional.one_hot(int_vals.squeeze()).T
+            one_hot_tot = torch.nn.functional.one_hot(int_vals.squeeze(),oh_classes).T
             res += [one_hot_tot]
             if includes_na:
                 new_dim = torch.zeros(1, one_hot_tot.shape[-1])
@@ -94,48 +79,30 @@ def get_plot_from_val_list(
                 one_hot_tot[0, na_mask] = 1
                 one_hot_tot[1, na_mask] = 0
             continue
-
-        one_hot = torch.nn.functional.one_hot(int_vals.T).permute(0, 2, 1)
+        
+        one_hot = torch.nn.functional.one_hot(int_vals.T, oh_classes).permute(0, 2, 1)
         tot = int_vals.sum(axis=-1)
         # tot[na_mask] = -1
-        one_hot_tot = torch.nn.functional.one_hot(tot).T
-
+        one_hot_tot = torch.nn.functional.one_hot(tot, num_classes=max(tot.max(), max_total + 1)).T
+        
         if includes_na:
             new_dim = torch.zeros(2, 1, one_hot.shape[-1])
             one_hot = torch.cat([new_dim, one_hot], dim=1)
             one_hot[:, 0, na_mask] = 1
-            one_hot[:, 1, na_mask] = 0  # as nas have been set to 0
+            one_hot[:, 1, na_mask] = 0 # as nas have been set to 0
             one_hot_tot = torch.cat([new_dim[0], one_hot_tot], dim=0)
             one_hot_tot[0, na_mask] = 1
             one_hot_tot[1, na_mask] = 0
-
+            
         res += [*one_hot, one_hot_tot]
+
 
     if include_prob:
         for model_key in model_keys:
-            key_stub = f"{model_key}_" if len(model_keys) > 1 else ""
-            # TODO if statements for backward compat, delete on new trained
-            aracna_maj_vals = joined_df[
-                [
-                    c
-                    for i in range(max_total)
-                    if (c := f"{key_stub}marg_prob_maj_{i}") in joined_df.columns
-                ]
-            ].values
-            aracna_min_vals = joined_df[
-                [
-                    c
-                    for i in range(max_total // 2)
-                    if (c := f"{key_stub}marg_prob_min_{i}") in joined_df.columns
-                ]
-            ].values
-            aracna_tot_vals = joined_df[
-                [
-                    c
-                    for i in range(max_total)
-                    if (c := f"{key_stub}marg_prob_tot_{i}") in joined_df.columns
-                ]
-            ].values
+            #TODO if statements for backward compat, delete on new trained
+            aracna_maj_vals = joined_df[[c for i in range(max_total) if (c:=f"{model_key}_marg_prob_maj_{i}") in joined_df.columns]].values
+            aracna_min_vals = joined_df[[c for i in range(max_total//2) if (c:=f"{model_key}_marg_prob_min_{i}") in joined_df.columns]].values
+            aracna_tot_vals = joined_df[[c for i in range(max_total) if (c:=f"{model_key}_marg_prob_tot_{i}") in joined_df.columns]].values
             _max_vals.append(5)
 
             max_adjust.append(0)
@@ -180,9 +147,9 @@ def get_plot_from_val_list(
             # if (j + 1) % 3 == 0 or j // 3 < 3:
             idx = j // 3 - row_adjust
             if (j + 1) % 3 == 0:
-                cutoff_val = 9
+                cutoff_val = (override_tot or 8) + 1
             elif max_vals:
-                cutoff_val = max(5, min(max_vals[idx] + 1, _max_vals[idx] + 1))
+                cutoff_val = max(5, min(max_vals[idx] + 1, _max_vals[idx]  + 1))
             else:
                 cutoff_val = max(5, min(10, _max_vals[idx] + 1))
             cbar = False
@@ -191,28 +158,29 @@ def get_plot_from_val_list(
                 cbar = True
                 cbar_kws = {"orientation": "horizontal", "pad": 0.15}
 
-            cmap = LinearSegmentedColormap.from_list(
-                "custom_cmap", ["white", "#08306b"], N=100
-            )
+            cmap = LinearSegmentedColormap.from_list("custom_cmap", ["white", "#08306b"], N=100)
             if colors is not None:
-                c_val = colors[j // 3]
+                c_val = colors[j//3]
                 if c_val is not None:
-                    cmap = LinearSegmentedColormap.from_list(
-                        "custom_cmap", ["white", c_val], N=100
-                    )
-
+                    cmap = LinearSegmentedColormap.from_list("custom_cmap", ["white", c_val], N=100)
+            
             num_classes = cutoff_val + max_adjust[idx]
+            
             sns.heatmap(
-                res[i][:num_classes],
+                res[i][:num_classes].flip(0),
                 ax=ax,
                 cmap=cmap,
                 cbar=cbar,
                 cbar_kws=cbar_kws,
             )
-            ax.set_yticks([i + 0.5 for i in range(num_classes)])
-            labels = [i for i in range(cutoff_val)]
+            use_min = j%3 == 1
+
+            min_idx = max_min if isinstance(max_min, int) else max_min[idx]
+            min_val = cutoff_val - 1 - min_idx  if use_min else 0
+            ax.set_yticks([i + 0.5 for i in range(min_val, num_classes)])
+            labels = [i for i in range(min_idx + 1 if use_min else cutoff_val)][::-1]
             if max_adjust[idx] == 1:
-                labels = ["NA"] + labels
+                labels = labels + ["NA"]
             ax.set_yticklabels(
                 labels,
                 rotation=0,

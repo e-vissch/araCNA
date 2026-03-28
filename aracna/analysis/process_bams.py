@@ -1,9 +1,9 @@
-import multiprocessing
-from functools import partial
-
-import numpy as np
 import pandas as pd
+import multiprocessing
 import pysam
+import numpy as np
+from functools import partial
+from tqdm import tqdm
 
 
 def check_read_passes(read, min_mapq=35):
@@ -29,7 +29,7 @@ def process_row(index, snp_dataframe, window_val):
     row = snp_dataframe.iloc[index]
     # Open a new BAM file handle per process
 
-    chr_val = f"chr{row.chr}" if row.chr != 23 else "chrX"
+    chr_val = f"chr{row.chr}" if row.chr != 23 else f"chrX"
     coverage_snp = bam.count_coverage(
         contig=chr_val,
         start=row.position - 1,
@@ -37,27 +37,33 @@ def process_row(index, snp_dataframe, window_val):
         quality_threshold=20,
         read_callback=check_read_passes,
     )
-    coverage_window = bam.count_coverage(
-        contig=chr_val,
-        start=row.position - window_val - 1,
-        stop=row.position + window_val,
-        quality_threshold=0,
-        read_callback=check_read_passes,
-    )
 
     snp_pos_cov = np.array(coverage_snp)[:, 0]
-    coverage_window = np.array(coverage_window)
 
     # Process the coverage data as before
     depth = snp_pos_cov[row.a1 - 1] + snp_pos_cov[row.a0 - 1]
-    # row.a1 is index of minor allele
-    BAF = np.nan if depth == 0 else snp_pos_cov[row.a1 - 1] / depth
+    if depth == 0:
+        BAF = np.nan
+    else:
+        BAF = snp_pos_cov[row.a1 - 1] / depth  # row.a1 is index of minor allele
 
-    cov = np.sum(coverage_window, axis=0)
-    zero_count = cov[cov < 1e-6].shape[0]
+    if window_val is not None:
+        coverage_window = bam.count_coverage(
+            contig=chr_val,
+            start=row.position - window_val - 1,
+            stop=row.position + window_val,
+            quality_threshold=0,
+            read_callback=check_read_passes,
+        )
 
-    windowed_depth = np.mean(np.sum(coverage_window, axis=0))
-    return index, depth, windowed_depth, BAF, zero_count
+        coverage_window = np.array(coverage_window)
+        cov = np.sum(coverage_window, axis=0)
+        zero_count = cov[cov < 1e-6].shape[0]
+
+        windowed_depth = np.mean(np.sum(coverage_window, axis=0))
+        return row.name, depth, windowed_depth, BAF, zero_count
+
+    return row.name, depth, BAF
 
 
 def write_full_df(loci_file, snp_dir_stub, write_file):
@@ -99,16 +105,26 @@ def get_file_info(bam_file, snp_file, out_file, num_processes, window_val=1000):
     with multiprocessing.Pool(
         processes=num_processes, initializer=init_worker, initargs=[bam_file]
     ) as pool:
-        results = pool.map(
-            partial(process_row, snp_dataframe=snp_dataframe, window_val=window_val),
-            snp_dataframe.index,
-            chunksize=chunksize,
+        results = list(
+            tqdm(
+                pool.imap_unordered(
+                    partial(
+                        process_row, snp_dataframe=snp_dataframe, window_val=window_val
+                    ),
+                    snp_dataframe.index,
+                    chunksize=chunksize,
+                ),
+                total=snp_dataframe.shape[0],
+            )
         )
 
     id_cols = ["chr", "position"]
-    info_cols = ["depth", "windowed_depth", "BAF", "windowed_zero_count"]
+    if window_val is None:
+        info_cols = ["depth", "BAF"]
+    else:
+        info_cols = ["depth", "windowed_depth", "BAF", "windowed_zero_count"]
 
-    results_df = pd.DataFrame(results, columns=["index_val", *info_cols]).sort_values(
+    results_df = pd.DataFrame(results, columns=["index_val"] + info_cols).sort_values(
         "index_val"
     )
     results_df[id_cols] = snp_dataframe[id_cols]
